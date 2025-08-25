@@ -12,8 +12,8 @@
     "url": "https://github.com/maintux/homebridge-shelly-blu/issues"
   },
   "engines": {
-    "node": "^20.5.0",
-    "homebridge": "^1.6.0"
+    "node": "^20.5.0 || ^22.0.0",
+    "homebridge": "^1.6.0 || ^1.11.0"
   },
   "main": "dist/index.js",
   "scripts": {
