@@ -3,6 +3,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { SBDWAccessory } from './accessories/SBDWAccessory';
+import { SBMTAAccessory } from './accessories/SBMTAAccessory';
 import ShellyCloudApi from './oauth';
 import { client as WebSocketClient } from 'websocket';
 import {
@@ -61,10 +62,15 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
   configureAccessory(platformAccessory: PlatformAccessory) {
     this.log.info('Loading accessory from cache:', platformAccessory.displayName);
 
-    // add the restored accessory to the accessories cache so we can track if it has already been registered
-    if (platformAccessory.context.code.split('-')[0] === 'SBDW') {
-      // create a new accessory
+    const codePrefix = platformAccessory.context.code.split('-')[0];
+    if (codePrefix === 'SBDW') {
       const accessory = new SBDWAccessory(this, {
+        uniqueId: platformAccessory.context.uniqueId,
+        code: platformAccessory.context.code,
+      }, platformAccessory);
+      this.accessories.push(accessory);
+    } else if (codePrefix === 'SBMTA') {
+      const accessory = new SBMTAAccessory(this, {
         uniqueId: platformAccessory.context.uniqueId,
         code: platformAccessory.context.code,
       }, platformAccessory);
@@ -128,7 +134,9 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
             const uuid = this.api.hap.uuid.generate(payload.device.id as any);
             const existingAccessory = this.accessories.find(accessory => accessory.platformAccessory.UUID === uuid);
             if(existingAccessory) {
-              if (payload.device.code.split('-')[0] === 'SBDW') {
+              const codePrefix = payload.device.code.split('-')[0];
+              if (codePrefix === 'SBMTA') {
+                this.log.info('BLU Motion payload: %j', payload.status); // <--- Add this line
                 existingAccessory.updateStatus({
                   uniqueId: payload.device.id,
                   code: payload.device.code,
@@ -145,27 +153,26 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
   }
 
   registerDevices(devices) {
-    // loop over the discovered devices and register each one if it has not already been registered
     const accessories: Array<PlatformAccessory> = [];
     for (const device of devices) {
-
-      // generate a unique id for the accessory this should be generated from
-      // something globally unique, but constant, for example, the device serial
-      // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.uniqueId);
-
-      // see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(accessory => accessory.platformAccessory.UUID === uuid);
       this.log.debug('%j', device);
 
-      if (device.code.split('-')[0] === 'SBDW') {
+      const codePrefix = device.code.split('-')[0];
 
-        // create a new accessory
+      if (codePrefix === 'SBDW') {
         const accessory = existingAccessory ?? new SBDWAccessory(this, device);
-
         if(!existingAccessory) {
-          // the accessory does not yet exist, so we need to create it
+          this.log.info('Adding new accessory:', device.code);
+          accessories.push(accessory.platformAccessory);
+        } else {
+          this.log.info('Restore accessory from cache:', device.code);
+          accessory.updateStatus(device);
+        }
+      } else if (codePrefix === 'SBMTA') {
+        const accessory = existingAccessory ?? new SBMTAAccessory(this, device);
+        if(!existingAccessory) {
           this.log.info('Adding new accessory:', device.code);
           accessories.push(accessory.platformAccessory);
         } else {
@@ -173,11 +180,9 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
           accessory.updateStatus(device);
         }
       }
-
     }
 
     if(accessories.length > 0) {
-      // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessories);
     }
   }

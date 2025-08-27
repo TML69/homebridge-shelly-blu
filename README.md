@@ -10,6 +10,7 @@ enabling HomeKit support for the Shelly BLU devices using cloud API.
 ## Supported devices
 
 * [Shelly BLU Door Window Sensor](https://kb.shelly.cloud/knowledge-base/shellyblu-door-window)
+* [Shelly BLU Motion](https://kb.shelly.cloud/knowledge-base/shellyblu-motion)
 
 ## Installation
 
