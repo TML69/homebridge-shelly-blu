@@ -170,7 +170,8 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
           this.log.info('Restore accessory from cache:', device.code);
           accessory.updateStatus(device);
         }
-      } else if (codePrefix === 'SBMTA') {
+      } else if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
+        this.log.info(`Found BLU Motion sensor: ${device.code} (${device.uniqueId})`);
         const accessory = existingAccessory ?? new SBMTAAccessory(this, device);
         if(!existingAccessory) {
           this.log.info('Adding new accessory:', device.code);
