@@ -20,7 +20,8 @@ export class SBMTAAccessory extends BaseAccessory {
   }
 
   updateStatus(device: any) {
-    const motionDetected = !!device.payload?.motion;
+    // For Shelly BLU Motion, motion status is at payload["motion:0"].motion
+    const motionDetected = !!device.payload?.["motion:0"]?.motion;
     this.motionService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
   }
 }
