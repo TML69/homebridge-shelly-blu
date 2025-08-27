@@ -79,24 +79,24 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
   }
 
   async discoverDevices(): Promise<Array<any>> {
-    // for(const a of this.accessories) {
-    //   this.log.info('%j', a.platformAccessory.UUID);
-    //   this.log.info('Removing existing accessory from cache:', a.platformAccessory.displayName);
-    //   this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [a.platformAccessory]);
-    // }
-
     const devices: Array<any> = [];
     if (this._shellyApi) {
       try {
         const payload = await this._shellyApi.call('/device/all_status');
         if (is_shelly_generic_response(payload) && payload.isok === true) {
           for(const deviceId in (payload.data as any).devices_status) {
-            if((payload.data as any).devices_status[deviceId]._dev_info?.gen === 'GBLE') {
+            const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
+            if(devInfo?.gen === 'GBLE') {
               devices.push({
                 uniqueId: deviceId,
-                code: (payload.data as any).devices_status[deviceId]._dev_info.code,
+                code: devInfo.code,
                 payload: (payload.data as any).devices_status[deviceId],
               });
+              // Log BLU Motion sensors when discovered
+              const codePrefix = devInfo.code.split('-')[0];
+              if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
+                this.log.info(`Discovered BLU Motion sensor: ${devInfo.code} (${deviceId})`);
+              }
             }
           }
         }
