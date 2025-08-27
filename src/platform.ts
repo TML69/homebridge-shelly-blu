@@ -86,6 +86,10 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
         if (is_shelly_generic_response(payload) && payload.isok === true) {
           for(const deviceId in (payload.data as any).devices_status) {
             const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
+
+            // Logging all devices for debugging
+            this.log.info(`Device found: ${devInfo.code} (${deviceId}))`);
+
             if(devInfo?.gen === 'GBLE') {
               devices.push({
                 uniqueId: deviceId,
