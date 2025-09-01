@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory } from 'homebridge';
-import BaseAccessory from './BaseAccessory';
 import { ShellyBluPlatform } from '../platform';
+import BaseAccessory from './BaseAccessory';
 
 export class SBMTAAccessory extends BaseAccessory {
   private motionService: Service;

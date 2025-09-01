@@ -97,7 +97,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
               });
               // Log BLU Motion sensors when discovered
               const codePrefix = devInfo.code.split('-')[0];
-              if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
+              if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
                 this.log.info(`Discovered BLU Motion sensor: ${devInfo.code} (${deviceId})`);
               }
             }
@@ -138,7 +138,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
             const existingAccessory = this.accessories.find(accessory => accessory.platformAccessory.UUID === uuid);
             if(existingAccessory) {
               const codePrefix = payload.device.code.split('-')[0];
-              if (codePrefix === 'SBMTA') {
+              if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
                 this.log.info('BLU Motion payload: %j', payload.status); // <--- Add this line
                 existingAccessory.updateStatus({
                   uniqueId: payload.device.id,
@@ -173,7 +173,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
           this.log.info('Restore accessory from cache:', device.code);
           accessory.updateStatus(device);
         }
-      } else if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
+      } else if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
         this.log.info(`Found BLU Motion sensor: ${device.code} (${device.uniqueId})`);
         const accessory = existingAccessory ?? new SBMTAAccessory(this, device);
         if(!existingAccessory) {
