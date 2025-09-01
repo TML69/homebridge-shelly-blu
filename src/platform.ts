@@ -82,6 +82,8 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
     if (this._shellyApi) {
       try {
         const payload = await this._shellyApi.call('/device/all_status');
+        this.log.info("Full payload from Shelly API: %j", payload);
+        
         if (is_shelly_generic_response(payload) && payload.isok === true) {
           for(const deviceId in (payload.data as any).devices_status) {
             const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
