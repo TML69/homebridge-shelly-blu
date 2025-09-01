@@ -68,19 +68,13 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
         code: platformAccessory.context.code,
       }, platformAccessory);
       this.accessories.push(accessory);
-    } else if (codePrefix === 'SBMTA') {
+    } else if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
       const accessory = new SBMTAAccessory(this, {
         uniqueId: platformAccessory.context.uniqueId,
         code: platformAccessory.context.code,
       }, platformAccessory);
       this.accessories.push(accessory);
-    } else if (codePrefix === 'SBBMO') {
-      const accessory = new SBBMOAccessory(this, {
-        uniqueId: platformAccessory.context.uniqueId,
-        code: platformAccessory.context.code,
-      }, platformAccessory);
-      this.accessories.push(accessory);
-}
+    } 
   }
 
   async discoverDevices(): Promise<Array<any>> {
@@ -103,7 +97,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
               });
               // Log BLU Motion sensors when discovered
               const codePrefix = devInfo.code.split('-')[0];
-              if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
+              if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
                 this.log.info(`Discovered BLU Motion sensor: ${devInfo.code} (${deviceId})`);
               }
             }
@@ -144,7 +138,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
             const existingAccessory = this.accessories.find(accessory => accessory.platformAccessory.UUID === uuid);
             if(existingAccessory) {
               const codePrefix = payload.device.code.split('-')[0];
-              if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
+              if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
                 this.log.info('BLU Motion payload: %j', payload.status); // <--- Add this line
                 existingAccessory.updateStatus({
                   uniqueId: payload.device.id,
@@ -179,7 +173,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
           this.log.info('Restore accessory from cache:', device.code);
           accessory.updateStatus(device);
         }
-      } else if (codePrefix === 'SBMTA' || codePrefix === 'SBBMO') {
+      } else if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
         this.log.info(`Found BLU Motion sensor: ${device.code} (${device.uniqueId})`);
         const accessory = existingAccessory ?? new SBMTAAccessory(this, device);
         if(!existingAccessory) {
