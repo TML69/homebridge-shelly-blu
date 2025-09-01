@@ -22,6 +22,9 @@ export class SBMTAAccessory extends BaseAccessory {
   updateStatus(device: any) {
     const payload = device.payload || device.status || {};
     const motionDetected = !!payload["motion:0"]?.motion;
+
+    this.platform.log.info(`[${device.code}] Motion detected: ${motionDetected}`);
+
     this.motionService.updateCharacteristic(
       this.platform.Characteristic.MotionDetected,
       motionDetected

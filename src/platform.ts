@@ -77,49 +77,54 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
     } 
   }
 
-  async discoverDevices(): Promise<Array<any>> {
-    const devices: Array<any> = [];
-    if (this._shellyApi) {
-      try {
-        const payload = await this._shellyApi.call('/device/all_status');
-        
-        if (payload) {
-          this.log.info('Full payload from Shelly Cloud: %j', payload);
-        } else {
-          this.log.warn('No payload received from Shelly Cloud');
-        }
+async discoverDevices(): Promise<Array<any>> {
+  const devices: Array<any> = [];
+  if (!this._shellyApi) return devices;
 
-        if (is_shelly_generic_response(payload) && payload.isok === true) {
-          for(const deviceId in (payload.data as any).devices_status) {
-            const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
+  try {
+    const payload = await this._shellyApi.call('/device/all_status');
 
-            // Logging all devices for debugging
-            this.debugLog(`Device found: ${devInfo.code} (${deviceId}))`);
+    this.debugLog('Full payload from Shelly Cloud:', payload);
 
-            if(devInfo?.gen === 'GBLE') {
+    if (payload && payload.data?.devices_status) {
+      for (const deviceId in payload.data.devices_status) {
+        const gatewayDevice = payload.data.devices_status[deviceId];
+
+        // Prüfen, ob es ein Shelly Plus Gateway ist
+        if (gatewayDevice._dev_info?.gen?.startsWith('G2') || gatewayDevice._dev_info?.gen?.startsWith('SPLUS')) {
+          // Alle BLE Sub-Devices prüfen
+          const bleDevices = gatewayDevice.status?.ble ?? {};
+          const bthomeDevices = gatewayDevice.status?.bthome ?? {};
+
+          const allSubDevices = { ...bleDevices, ...bthomeDevices };
+
+          for (const subId in allSubDevices) {
+            const subDevice = allSubDevices[subId];
+            const subCode = subDevice._dev_info?.code;
+
+            if (!subCode) continue;
+
+            const codePrefix = subCode.split('-')[0];
+
+            if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
+              // BLU Motion-Sensor gefunden
               devices.push({
-                uniqueId: deviceId,
-                code: devInfo.code,
-                payload: (payload.data as any).devices_status[deviceId],
+                uniqueId: subDevice._dev_info.id || subId,
+                code: subCode,
+                payload: subDevice,
               });
-              // Log BLU Motion sensors when discovered
-              const codePrefix = devInfo.code.split('-')[0];
-              if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
-                this.log.info(`Discovered BLU Motion sensor: ${devInfo.code} (${deviceId})`);
-                devices.push({
-                  uniqueId: deviceId,
-                  code: devInfo.code,
-                  payload: (payload.data as any).devices_status[deviceId],
-                });
-              }
+              this.log.info(`Discovered BLU Motion sensor: ${subCode} (subId: ${subId})`);
             }
           }
         }
-      } catch { /* empty */ }
+      }
     }
-
-    return devices;
+  } catch (err) {
+    this.log.error('Error fetching devices:', err);
   }
+
+  return devices;
+}
 
   async handleDevicesStateChanges(devices) {
     if (this._shellyApi && devices.length > 0) {
