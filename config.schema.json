@@ -22,6 +22,12 @@
         "type": "string",
         "required": true,
         "default": ""
+      },
+      "debug": {
+        "title": "Enable Debug Logging",
+        "type": "boolean",
+        "default": false,
+        "description": "Show detailed debug logs in the Homebridge log."
       }
     }
   }

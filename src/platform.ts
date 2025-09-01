@@ -21,20 +21,19 @@ import BaseAccessory from './accessories/BaseAccessory';
 export class ShellyBluPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-
-  // this is used to track restored cached accessories
   public readonly accessories: BaseAccessory[] = [];
 
   private _shellyApi: ShellyCloudApi | undefined;
-
   private _wsClient;
+  private debugEnabled: boolean;
 
   constructor(
     public readonly log: Logger,
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.log.debug('Finished initializing platform:', this.config.name);
+    this.debugEnabled = !!config.debug;
+    this.log.info('Finished initializing platform:', this.config.name);
 
     if (this.config.email && this.config.password) {
       this._shellyApi = new ShellyCloudApi(log, config, api);
@@ -88,7 +87,7 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
             const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
 
             // Logging all devices for debugging
-            this.log.info(`Device found: ${devInfo.code} (${deviceId}))`);
+            this.debugLog(`Device found: ${devInfo.code} (${deviceId}))`);
 
             if(devInfo?.gen === 'GBLE') {
               devices.push({
@@ -189,6 +188,12 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
 
     if(accessories.length > 0) {
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessories);
+    }
+  }
+
+  private debugLog(...args: any[]) {
+    if (this.debugEnabled) {
+      this.log.info('[DEBUG]', ...args);
     }
   }
 }
