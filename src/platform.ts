@@ -82,8 +82,13 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
     if (this._shellyApi) {
       try {
         const payload = await this._shellyApi.call('/device/all_status');
-        this.log.info("Full payload from Shelly API: %j", payload);
         
+        if (payload) {
+          this.log.info('Full payload from Shelly Cloud: %j', payload);
+        } else {
+          this.log.warn('No payload received from Shelly Cloud');
+        }
+
         if (is_shelly_generic_response(payload) && payload.isok === true) {
           for(const deviceId in (payload.data as any).devices_status) {
             const devInfo = (payload.data as any).devices_status[deviceId]._dev_info;
@@ -101,6 +106,11 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
               const codePrefix = devInfo.code.split('-')[0];
               if (codePrefix === 'SBMTA' || codePrefix === 'SBMO') {
                 this.log.info(`Discovered BLU Motion sensor: ${devInfo.code} (${deviceId})`);
+                devices.push({
+                  uniqueId: deviceId,
+                  code: devInfo.code,
+                  payload: (payload.data as any).devices_status[deviceId],
+                });
               }
             }
           }
@@ -134,6 +144,9 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
 
         connection.on('message', (message) => {
           const payload = JSON.parse(message.utf8Data);
+          
+          this.log.info('WS Message received: %j', message.utf8Data);
+
           if(is_shelly_statusonchange(payload)) {
             this.log.debug('%j', payload);
             const uuid = this.api.hap.uuid.generate(payload.device.id as any);
