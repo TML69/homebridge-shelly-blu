@@ -74,7 +74,13 @@ export class ShellyBluPlatform implements DynamicPlatformPlugin {
         code: platformAccessory.context.code,
       }, platformAccessory);
       this.accessories.push(accessory);
-    }
+    } else if (codePrefix === 'SBBMO') {
+      const accessory = new SBBMOAccessory(this, {
+        uniqueId: platformAccessory.context.uniqueId,
+        code: platformAccessory.context.code,
+      }, platformAccessory);
+      this.accessories.push(accessory);
+}
   }
 
   async discoverDevices(): Promise<Array<any>> {
